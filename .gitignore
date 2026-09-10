@@ -1,0 +1,7 @@
+rplidar_sdk/output/
+rplidar_sdk/build/
+lidar_web/scan.png
+lidar_web/stats.json
+__pycache__/
+*.pyc
+.bash_history
