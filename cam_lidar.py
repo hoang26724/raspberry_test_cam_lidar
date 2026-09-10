@@ -167,6 +167,11 @@ def camera_worker():
 
     debug_logged = False
 
+    # --- Bien theo doi FPS ---
+    fps = 0.0
+    frame_count = 0
+    fps_start_time = time.time()
+
     while True:
         request = None
         try:
@@ -175,8 +180,6 @@ def camera_worker():
             frame = request.make_array("main")  # BGR order
 
             # --- Nhan dien vat the ngay tren chip AI cua camera (khong ton CPU Pi) ---
-            # Boc rieng trong try/except de neu loi cung khong lam hong ca frame
-            # (van tiep tuc nhan dien khuon mat + stream binh thuong)
             try:
                 outputs = imx500.get_outputs(metadata)
             except Exception:
@@ -231,6 +234,19 @@ def camera_worker():
                         frame, 'Face', (x, y - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2
                     )
+
+            # --- Tinh va ve FPS ---
+            frame_count += 1
+            elapsed = time.time() - fps_start_time
+            if elapsed >= 1.0:
+                fps = frame_count / elapsed
+                frame_count = 0
+                fps_start_time = time.time()
+
+            cv2.putText(
+                frame, f"FPS: {fps:.1f}", (10, 25),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2
+            )
 
             ok, jpeg = cv2.imencode(
                 '.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
@@ -343,3 +359,4 @@ if __name__ == '__main__':
         srv.serve_forever()
     except KeyboardInterrupt:
         print("Dang dung server...")
+
