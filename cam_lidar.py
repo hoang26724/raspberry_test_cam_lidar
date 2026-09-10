@@ -225,13 +225,16 @@ def camera_worker():
             # --- Nhan dien khuon mat bang OpenCV (CPU, vi imx500 khong co model nay) ---
             if face_cascade is not None:
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = face_cascade.detectMultiScale(
-                    gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50)
+                faces, reject_levels, level_weights = face_cascade.detectMultiScale3(
+                    gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50),
+                    outputRejectLevels=True
                 )
-                for (x, y, w, h) in faces:
+                for (x, y, w, h), weight in zip(faces, level_weights):
+                    # Chuan hoa weight (thuong 0-15+) thanh % gan dung, gioi han 1-99%
+                    confidence_pct = min(99, max(1, int(weight * 8)))
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     cv2.putText(
-                        frame, 'Face', (x, y - 8),
+                        frame, f'Face {confidence_pct}%', (x, y - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2
                     )
 
@@ -359,4 +362,3 @@ if __name__ == '__main__':
         srv.serve_forever()
     except KeyboardInterrupt:
         print("Dang dung server...")
-
